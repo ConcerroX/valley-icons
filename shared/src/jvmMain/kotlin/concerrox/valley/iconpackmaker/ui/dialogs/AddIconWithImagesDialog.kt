@@ -22,8 +22,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import concerrox.ui.component.XButton
 import concerrox.valley.iconpackmaker.model.IconItem
+import concerrox.valley.iconpackmaker.util.FilePathManager
 import coil3.compose.AsyncImage
+import coil3.compose.LocalPlatformContext
+import coil3.request.CachePolicy
+import coil3.request.ImageRequest
 import java.io.File
+
+private val SUPPORTED_IMAGE_EXTENSIONS = setOf("png", "jpg", "jpeg", "webp")
 
 // 验证组件信息格式是否正确
 fun isValidComponentInfo(component: String): Boolean {
@@ -40,16 +46,57 @@ fun isValidComponentInfo(component: String): Boolean {
 fun formatComponentInfo(input: String): String {
     val trimmed = input.trim()
     if (trimmed.isBlank()) return ""
-    
+
     // 如果已经包含ComponentInfo包装，直接返回
     if (trimmed.startsWith("ComponentInfo{")) return trimmed
-    
+
     // 如果是简单的包名/Activity格式，自动包装
     if (trimmed.contains("/") && !trimmed.contains("{")) {
         return "ComponentInfo{$trimmed}"
     }
-    
+
     return trimmed
+}
+
+private fun resolveDesktopDefaultImage(fileName: String, itemToEdit: IconItem?): File? {
+    if (itemToEdit != null) {
+        return null
+    }
+
+    return FilePathManager.getDesktopImageFile(fileName)
+        ?.takeIf(::isSupportedImageFile)
+}
+
+private fun buildPreviewKey(file: File?): String {
+    if (file == null) {
+        return "none"
+    }
+
+    return buildString {
+        append(file.absolutePath)
+        append("|")
+        append(file.exists())
+        append("|")
+        append(if (file.exists()) file.lastModified() else -1L)
+        append("|")
+        append(if (file.exists()) file.length() else -1L)
+    }
+}
+
+@Composable
+private fun rememberNoCacheImageRequest(file: File?): ImageRequest? {
+    val context = LocalPlatformContext.current
+    val previewKey = buildPreviewKey(file)
+
+    return remember(context, previewKey) {
+        file?.takeIf(File::exists)?.let {
+            ImageRequest.Builder(context)
+                .data(it)
+                .memoryCachePolicy(CachePolicy.DISABLED)
+                .diskCachePolicy(CachePolicy.DISABLED)
+                .build()
+        }
+    }
 }
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -57,18 +104,46 @@ fun formatComponentInfo(input: String): String {
 fun AddIconWithImagesDialog(
     categoryTitle: String,
     itemToEdit: IconItem? = null, // 编辑模式时传入现有项
-    onDismiss: () -> Unit, 
+    onDismiss: () -> Unit,
     onConfirm: (String, String, File?, File?) -> Unit
 ) {
     val prefix = if (itemToEdit == null) categoryTitle.lowercase() + "_" else ""
-    var drawableName by remember(prefix) { mutableStateOf(if (itemToEdit != null) itemToEdit.drawable else "") }
-    var componentName by remember { mutableStateOf(if (itemToEdit != null) itemToEdit.component else "") }
-    var foregroundImage by remember { mutableStateOf<File?>(null) }
-    var backgroundImage by remember { mutableStateOf<File?>(null) }
-    var isDragging by remember { mutableStateOf(false) }
+    val dialogStateKey = remember(categoryTitle, itemToEdit?.id) {
+        buildString {
+            append(categoryTitle)
+            append("|")
+            append(itemToEdit?.id ?: "new")
+        }
+    }
+    val defaultForegroundImage = remember(dialogStateKey) {
+        resolveDesktopDefaultImage("Foreground.png", itemToEdit)
+    }
+    val defaultBackgroundImage = remember(dialogStateKey) {
+        resolveDesktopDefaultImage("Background.png", itemToEdit)
+    }
+    var drawableName by remember(dialogStateKey) {
+        mutableStateOf(if (itemToEdit != null) itemToEdit.drawable else "")
+    }
+    var componentName by remember(dialogStateKey) {
+        mutableStateOf(if (itemToEdit != null) itemToEdit.component else "")
+    }
+    var foregroundImage by remember(dialogStateKey) { mutableStateOf(defaultForegroundImage) }
+    var backgroundImage by remember(dialogStateKey) { mutableStateOf(defaultBackgroundImage) }
     val focusRequester = remember { FocusRequester() }
+    val canSubmit = remember(drawableName, foregroundImage, backgroundImage, itemToEdit) {
+        if (itemToEdit != null) {
+            true
+        } else {
+            drawableName.isNotBlank() && (foregroundImage != null || backgroundImage != null)
+        }
+    }
 
-    LaunchedEffect(Unit) {
+    LaunchedEffect(dialogStateKey) {
+        drawableName = if (itemToEdit != null) itemToEdit.drawable else ""
+        componentName = if (itemToEdit != null) itemToEdit.component else ""
+        foregroundImage = defaultForegroundImage
+        backgroundImage = defaultBackgroundImage
+
         if (itemToEdit == null) { // 只有添加模式才自动聚焦
             focusRequester.requestFocus()
         }
@@ -76,11 +151,11 @@ fun AddIconWithImagesDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { 
+        title = {
             Text(
-                if (itemToEdit != null) "编辑图标 - ${itemToEdit.drawable}" 
+                if (itemToEdit != null) "编辑图标 - ${itemToEdit.drawable}"
                 else "向 '$categoryTitle' 添加图标"
-            ) 
+            )
         },
         text = {
             Column(
@@ -111,12 +186,12 @@ fun AddIconWithImagesDialog(
                         modifier = Modifier.fillMaxWidth()
                     )
                 }
-                
+
                 Spacer(modifier = Modifier.height(8.dp))
 
                 OutlinedTextField(
                     value = componentName,
-                    onValueChange = { 
+                    onValueChange = {
                         // 实时格式化输入
                         val formatted = formatComponentInfo(it)
                         componentName = formatted
@@ -126,7 +201,7 @@ fun AddIconWithImagesDialog(
                     isError = componentName.isNotBlank() && !isValidComponentInfo(componentName),
                     modifier = Modifier.fillMaxWidth()
                 )
-                
+
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     text = if (componentName.isNotBlank() && !isValidComponentInfo(componentName)) {
@@ -155,8 +230,7 @@ fun AddIconWithImagesDialog(
                 ImageDropArea(
                     label = "前景图片 (Foreground)",
                     currentImage = foregroundImage,
-                    onImageSelected = { foregroundImage = it },
-                    isDragging = isDragging && foregroundImage == null
+                    onImageSelected = { foregroundImage = it }
                 )
 
                 Spacer(modifier = Modifier.height(12.dp))
@@ -165,8 +239,7 @@ fun AddIconWithImagesDialog(
                 ImageDropArea(
                     label = "背景图片 (Background)",
                     currentImage = backgroundImage,
-                    onImageSelected = { backgroundImage = it },
-                    isDragging = isDragging && backgroundImage == null
+                    onImageSelected = { backgroundImage = it }
                 )
 
                 // 当前图片预览（仅编辑模式）
@@ -182,11 +255,13 @@ fun AddIconWithImagesDialog(
                         style = MaterialTheme.typography.subtitle1,
                         modifier = Modifier.padding(bottom = 8.dp)
                     )
-                    IconPreviewArea(
-                        foregroundImage = foregroundImage,
-                        backgroundImage = backgroundImage,
-                        drawableName = if (drawableName.isNotBlank()) prefix + drawableName else ""
-                    )
+                    key(buildPreviewKey(foregroundImage), buildPreviewKey(backgroundImage)) {
+                        IconPreviewArea(
+                            foregroundImage = foregroundImage,
+                            backgroundImage = backgroundImage,
+                            drawableName = if (drawableName.isNotBlank()) prefix + drawableName else ""
+                        )
+                    }
                 }
             }
         },
@@ -196,7 +271,7 @@ fun AddIconWithImagesDialog(
                     val finalDrawableName = if (itemToEdit != null) drawableName else prefix + drawableName
                     onConfirm(finalDrawableName, componentName, foregroundImage, backgroundImage)
                 },
-                enabled = if (itemToEdit != null) true else drawableName.isNotBlank() && (foregroundImage != null || backgroundImage != null)
+                enabled = canSubmit
             ) {
                 Text(if (itemToEdit != null) "更新" else "创建")
             }
@@ -211,7 +286,7 @@ fun AddIconWithImagesDialog(
 // 处理拖放事件
 @OptIn(ExperimentalComposeUiApi::class)
 private fun handleDropEvent(
-    event: androidx.compose.ui.draganddrop.DragAndDropEvent, onImageSelected: (File) -> Unit
+    event: androidx.compose.ui.draganddrop.DragAndDropEvent, onImageSelected: (File?) -> Unit
 ): Boolean {
     return try {
         when (val dragData = event.dragData()) {
@@ -235,14 +310,14 @@ private fun handleDropEvent(
 // 处理文件列表拖放
 @OptIn(ExperimentalComposeUiApi::class)
 private fun handleFilesListDrop(
-    filesList: androidx.compose.ui.draganddrop.DragData.FilesList, onImageSelected: (File) -> Unit
+    filesList: androidx.compose.ui.draganddrop.DragData.FilesList, onImageSelected: (File?) -> Unit
 ): Boolean {
     val files = filesList.readFiles()
     return files.any { filePath ->
         try {
             val cleanPath = cleanFilePath(filePath)
             val file = File(cleanPath)
-            if (isValidImageFile(file)) {
+            if (isSupportedImageFile(file)) {
                 onImageSelected(file)
                 true
             } else {
@@ -257,7 +332,7 @@ private fun handleFilesListDrop(
 // 处理文本拖放
 @OptIn(ExperimentalComposeUiApi::class)
 private fun handleTextDrop(
-    textData: androidx.compose.ui.draganddrop.DragData.Text, onImageSelected: (File) -> Unit
+    textData: androidx.compose.ui.draganddrop.DragData.Text, onImageSelected: (File?) -> Unit
 ): Boolean {
     val text = textData.readText()
 
@@ -273,7 +348,7 @@ private fun handleTextDrop(
         if (cleanPath.isNotEmpty()) {
             try {
                 val file = File(cleanPath)
-                if (isValidImageFile(file)) {
+                if (isSupportedImageFile(file)) {
                     onImageSelected(file)
                     true
                 } else {
@@ -291,14 +366,14 @@ private fun handleTextDrop(
 // 处理后备方案
 @OptIn(ExperimentalComposeUiApi::class)
 private fun handleFallbackDrop(
-    dragData: Any, onImageSelected: (File) -> Unit
+    dragData: Any, onImageSelected: (File?) -> Unit
 ): Boolean {
     try {
         val textData = dragData as? androidx.compose.ui.draganddrop.DragData.Text
         if (textData != null) {
             val text = textData.readText()
             val file = File(text.trim())
-            if (isValidImageFile(file)) {
+            if (isSupportedImageFile(file)) {
                 onImageSelected(file)
                 return true
             }
@@ -332,11 +407,8 @@ private fun cleanFilePath(filePath: String): String {
     return cleanPath
 }
 
-// 验证是否为有效的图片文件
-private fun isValidImageFile(file: File): Boolean {
-    return file.exists() && file.isFile && file.extension.lowercase() in listOf(
-        "png", "jpg", "jpeg", "webp", "gif", "bmp"
-    )
+private fun isSupportedImageFile(file: File): Boolean {
+    return file.exists() && file.isFile && file.extension.lowercase() in SUPPORTED_IMAGE_EXTENSIONS
 }
 
 @OptIn(ExperimentalFoundationApi::class, ExperimentalComposeUiApi::class)
@@ -344,11 +416,10 @@ private fun isValidImageFile(file: File): Boolean {
 fun ImageDropArea(
     label: String,
     currentImage: File?,
-    onImageSelected: (File) -> Unit,
-    isDragging: Boolean,
+    onImageSelected: (File?) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var dragState by remember { mutableStateOf(isDragging) }
+    var dragState by remember { mutableStateOf(false) }
 
     val dropTarget = remember {
         object : androidx.compose.ui.draganddrop.DragAndDropTarget {
@@ -395,7 +466,7 @@ fun ImageDropArea(
                     modifier = Modifier.weight(1f)
                 )
                 XButton(
-                    onClick = { onImageSelected(File("")) }, // Clear selection
+                    onClick = { onImageSelected(null) }, // Clear selection
                     contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
                 ) {
                     Text("清除", fontSize = 12.sp)
@@ -429,6 +500,9 @@ fun IconPreviewArea(
     drawableName: String,
     modifier: Modifier = Modifier
 ) {
+    val backgroundRequest = rememberNoCacheImageRequest(backgroundImage)
+    val foregroundRequest = rememberNoCacheImageRequest(foregroundImage)
+
     Card(
         elevation = 4.dp, modifier = modifier.fillMaxWidth().padding(8.dp)
     ) {
@@ -444,9 +518,9 @@ fun IconPreviewArea(
                 ).padding(8.dp), contentAlignment = Alignment.Center
             ) {
                 // 背景预览
-                if (backgroundImage != null && backgroundImage.exists()) {
+                if (backgroundRequest != null) {
                     AsyncImage(
-                        model = backgroundImage,
+                        model = backgroundRequest,
                         contentDescription = "背景预览",
                         modifier = Modifier.fillMaxSize(),
                         contentScale = androidx.compose.ui.layout.ContentScale.Fit
@@ -454,9 +528,9 @@ fun IconPreviewArea(
                 }
 
                 // 前景预览
-                if (foregroundImage != null && foregroundImage.exists()) {
+                if (foregroundRequest != null) {
                     AsyncImage(
-                        model = foregroundImage,
+                        model = foregroundRequest,
                         contentDescription = "前景预览",
                         modifier = Modifier.fillMaxSize(),
                         contentScale = androidx.compose.ui.layout.ContentScale.Fit
@@ -501,11 +575,13 @@ private fun CurrentImagesPreview(
 ) {
     val backgroundPath = "androidApp/src/main/res/drawable-v26/${item.drawable}_background.png"
     val foregroundPath = "androidApp/src/main/res/drawable-v26/${item.drawable}_foreground.png"
-    
-    val projectRoot = System.getProperty("user.dir")
+
+    val projectRoot = FilePathManager.getProjectRoot()
     val backgroundFile = File("$projectRoot/$backgroundPath")
     val foregroundFile = File("$projectRoot/$foregroundPath")
-    
+    val backgroundRequest = rememberNoCacheImageRequest(backgroundFile)
+    val foregroundRequest = rememberNoCacheImageRequest(foregroundFile)
+
     val hasCurrentImages = backgroundFile.exists() || foregroundFile.exists()
     
     if (hasCurrentImages) {
@@ -533,9 +609,9 @@ private fun CurrentImagesPreview(
                     ).padding(8.dp), contentAlignment = Alignment.Center
                 ) {
                     // 背景预览
-                    if (backgroundFile.exists()) {
+                    if (backgroundRequest != null) {
                         AsyncImage(
-                            model = backgroundFile,
+                            model = backgroundRequest,
                             contentDescription = "当前背景",
                             modifier = Modifier.fillMaxSize(),
                             contentScale = androidx.compose.ui.layout.ContentScale.Fit
@@ -543,9 +619,9 @@ private fun CurrentImagesPreview(
                     }
 
                     // 前景预览
-                    if (foregroundFile.exists()) {
+                    if (foregroundRequest != null) {
                         AsyncImage(
-                            model = foregroundFile,
+                            model = foregroundRequest,
                             contentDescription = "当前前景",
                             modifier = Modifier.fillMaxSize(),
                             contentScale = androidx.compose.ui.layout.ContentScale.Fit

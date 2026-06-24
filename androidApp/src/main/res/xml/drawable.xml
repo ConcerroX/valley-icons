@@ -216,6 +216,16 @@
     <item drawable="others_next_player"/>
     <item drawable="others_poweramp"/>
     <item drawable="others_gaijin_pass"/>
+    <item drawable="others_hma_oss"/>
+    <item drawable="others_lemudroid"/>
+    <item drawable="others_lib_checker"/>
+    <item drawable="others_lsfg_android"/>
+    <item drawable="others_momo"/>
+    <item drawable="others_sai"/>
+    <item drawable="others_tanchjim"/>
+    <item drawable="others_picacg"/>
+    <item drawable="others_ram_cleanup"/>
+    <item drawable="others_my_boy"/>
     <category title="Baidu"/>
     <item drawable="baidu_maps"/>
     <item drawable="baidu_tieba"/>
@@ -262,4 +272,6 @@
     <item drawable="games_naruto"/>
     <item drawable="games_golden_spatula"/>
     <item drawable="games_arknights"/>
+    <item drawable="games_minecraft"/>
+    <item drawable="games_honor_of_kings"/>
 </resources>

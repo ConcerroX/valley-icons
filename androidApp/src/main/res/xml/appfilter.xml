@@ -304,4 +304,16 @@
     <item component="ComponentInfo{dev.anilbeesetti.nextplayer/dev.anilbeesetti.nextplayer.MainActivity}" drawable="others_next_player"/>
     <item component="ComponentInfo{com.maxmpz.audioplayer/com.maxmpz.audioplayer.standard_adaptive}" drawable="others_poweramp"/>
     <item component="ComponentInfo{gaijinnet.com.gaijinpass/gaijinnet.com.gaijinpass.MainActivity}" drawable="others_gaijin_pass"/>
+    <item component="ComponentInfo{org.frknkrc44.hma_oss/org.frknkrc44.hma_oss.MainActivityLauncher}" drawable="others_hma_oss"/>
+    <item component="ComponentInfo{com.swordfish.lemuroid/com.swordfish.lemuroid.app.mobile.feature.main.MainActivity}" drawable="others_lemudroid"/>
+    <item component="ComponentInfo{com.absinthe.libchecker/com.absinthe.libchecker.features.home.ui.MainActivity}" drawable="others_lib_checker"/>
+    <item component="ComponentInfo{com.lsfg.android/com.lsfg.android.ui.MainActivity}" drawable="others_lsfg_android"/>
+    <item component="ComponentInfo{com.mojang.minecraftpe/com.mojang.minecraftpe.MainActivity}" drawable="games_minecraft"/>
+    <item component="ComponentInfo{io.github.vvb2060.mahoshojo/io.github.vvb2060.mahoshojo.home.HomeActivity}" drawable="others_momo"/>
+    <item component="ComponentInfo{com.aefyr.sai/com.aefyr.sai.ui.activities.MainActivity}" drawable="others_sai"/>
+    <item component="ComponentInfo{com.tencent.tmgp.sgame/com.tencent.tmgp.sgame.SGameActivity}" drawable="games_honor_of_kings"/>
+    <item component="ComponentInfo{com.tanchjim.android/com.tanchjim.android.ui.activity.SplashActivity}" drawable="others_tanchjim"/>
+    <item component="ComponentInfo{com.picacomic.fregata/com.picacomic.fregata.activities.SplashActivity}" drawable="others_picacg"/>
+    <item component="ComponentInfo{com.kosajun.easymemorycleaner/com.kosajun.easymemorycleaner.MainActivity}" drawable="others_ram_cleanup"/>
+    <item component="ComponentInfo{com.fastemulator.gba/com.fastemulator.gba.RomListActivity}" drawable="others_my_boy"/>
 </resources>
