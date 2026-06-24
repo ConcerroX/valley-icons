@@ -215,6 +215,7 @@
     <item drawable="others_neo_player"/>
     <item drawable="others_next_player"/>
     <item drawable="others_poweramp"/>
+    <item drawable="others_gaijin_pass"/>
     <category title="Baidu"/>
     <item drawable="baidu_maps"/>
     <item drawable="baidu_tieba"/>

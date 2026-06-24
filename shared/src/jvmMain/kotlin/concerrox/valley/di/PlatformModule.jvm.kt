@@ -7,7 +7,7 @@ import concerrox.valley.data.source.XmlProvider
 import org.koin.dsl.module
 import kotlin.io.path.Path
 
-private val ProjectResPath = Path("D:/Projects/valley-icon-pack/app/src/main/res")
+private val ProjectResPath = Path("D:/Projects/Valley Icons/valley-icons-multiplatform/androidApp/src/main/res")
 
 actual val platformModule = module {
 

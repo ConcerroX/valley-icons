@@ -104,8 +104,8 @@ fun IconGridItem(
 fun IconPreview(
     drawableName: String, modifier: Modifier = Modifier
 ) {
-    val backgroundPath = "app/src/main/res/drawable-v26/${drawableName}_background.png"
-    val foregroundPath = "app/src/main/res/drawable-v26/${drawableName}_foreground.png"
+    val backgroundPath = "androidApp/src/main/res/drawable-v26/${drawableName}_background.png"
+    val foregroundPath = "androidApp/src/main/res/drawable-v26/${drawableName}_foreground.png"
 
     Box(modifier = modifier.size(48.dp)) {
         // 背景图片

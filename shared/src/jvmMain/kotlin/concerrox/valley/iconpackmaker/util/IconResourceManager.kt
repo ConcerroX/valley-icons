@@ -7,8 +7,8 @@ import java.nio.file.StandardCopyOption
 class IconResourceManager {
     
     companion object {
-        private const val DRAWABLE_V26_PATH = "app/src/main/res/drawable-v26"
-        private const val DRAWABLE_PATH = "app/src/main/res/drawable"
+        private const val DRAWABLE_V26_PATH = "androidApp/src/main/res/drawable-v26"
+        private const val DRAWABLE_PATH = "androidApp/src/main/res/drawable"
     }
     
     /**

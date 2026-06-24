@@ -6,7 +6,7 @@ import java.io.File
  * 文件路径管理器
  */
 object FilePathManager {
-    private const val RES_XML_PATH = "app/src/main/res/xml"
+    private const val RES_XML_PATH = "androidApp/src/main/res/xml"
     private const val DRAWABLE_XML = "drawable.xml"
     private const val APPFILTER_XML = "appfilter.xml"
     
@@ -31,7 +31,7 @@ object FilePathManager {
         
         for (path in possiblePaths) {
             val normalizedPath = File(path).canonicalPath
-            val testFile = File("$normalizedPath/app/src/main/res/xml/drawable.xml")
+            val testFile = File("$normalizedPath/androidApp/src/main/res/xml/drawable.xml")
             if (testFile.exists()) {
                 return normalizedPath
             }

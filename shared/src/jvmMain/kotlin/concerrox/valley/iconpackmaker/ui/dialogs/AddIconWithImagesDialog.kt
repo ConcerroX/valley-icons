@@ -499,8 +499,8 @@ private fun CurrentImagesPreview(
     item: IconItem,
     modifier: Modifier = Modifier
 ) {
-    val backgroundPath = "app/src/main/res/drawable-v26/${item.drawable}_background.png"
-    val foregroundPath = "app/src/main/res/drawable-v26/${item.drawable}_foreground.png"
+    val backgroundPath = "androidApp/src/main/res/drawable-v26/${item.drawable}_background.png"
+    val foregroundPath = "androidApp/src/main/res/drawable-v26/${item.drawable}_foreground.png"
     
     val projectRoot = System.getProperty("user.dir")
     val backgroundFile = File("$projectRoot/$backgroundPath")

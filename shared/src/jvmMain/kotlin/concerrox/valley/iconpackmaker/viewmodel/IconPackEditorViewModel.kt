@@ -378,8 +378,8 @@ class IconPackEditorViewModel : ViewModel() {
     fun checkDrawableExists(drawableName: String): Boolean {
         val projectRoot = FilePathManager.getProjectRoot()
         val drawablePaths = listOf(
-            "app/src/main/res/drawable-v26",
-            "app/src/main/res/drawable"
+            "androidApp/src/main/res/drawable-v26",
+            "androidApp/src/main/res/drawable"
         )
         return drawablePaths.any { path ->
             val drawableFile = File("$projectRoot/$path/${drawableName}.xml")

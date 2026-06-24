@@ -303,4 +303,5 @@
     <item component="ComponentInfo{live.alist.mpv/app.marlboroadvance.mpvex.MainActivity}" drawable="others_neo_player"/>
     <item component="ComponentInfo{dev.anilbeesetti.nextplayer/dev.anilbeesetti.nextplayer.MainActivity}" drawable="others_next_player"/>
     <item component="ComponentInfo{com.maxmpz.audioplayer/com.maxmpz.audioplayer.standard_adaptive}" drawable="others_poweramp"/>
+    <item component="ComponentInfo{gaijinnet.com.gaijinpass/gaijinnet.com.gaijinpass.MainActivity}" drawable="others_gaijin_pass"/>
 </resources>

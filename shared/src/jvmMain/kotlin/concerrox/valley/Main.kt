@@ -19,8 +19,14 @@ fun main() = application {
         onCloseRequest = ::exitApplication,
         title = stringResource(Res.string.app_name),
     ) {
-        IconPackMakerApp()
         App()
+    }
+
+    Window(
+        onCloseRequest = ::exitApplication,
+        title = stringResource(Res.string.app_name),
+    ) {
+        IconPackMakerApp()
     }
 
 }
